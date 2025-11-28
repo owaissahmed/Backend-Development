@@ -35,29 +35,81 @@ exports.getUserById = async (req, res) => {
 // Update User
 exports.updateUser = async (req, res) => {
   try {
+    const id = req.params.id
+    const body = req.body
+
+    if (!id || id.length !== 24) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
+
     const updatedUser = await User.findByIdAndUpdate(
-      req.params.id,
-      req.body,
+      id,
+      body,
       { new: true }
     );
 
-    if (!updatedUser) return res.status(404).send("User not found");
+    if (!updatedUser) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
 
-    res.send(updatedUser);
+    res.status(200).send({
+      success: true,
+      message: "User updated successfully",
+      user: updatedUser,
+    });
   } catch (err) {
-    res.status(500).send(err.message);
+    // ⚠ Server error
+    res.status(500).send({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
-// Delete User
+// DELETE User
+
 exports.deleteUser = async (req, res) => {
   try {
-    const deletedUser = await User.findByIdAndDelete(req.params.id);
+    const { id } = req.params;
 
-    if (!deletedUser) return res.status(404).send("User not found");
+    // 🔒 Validate MongoDB ID
+    if (!id || id.length !== 24) {
+      return res.status(400).send({
+        success: false,
+        message: "Invalid user ID",
+      });
+    }
 
-    res.send({ message: "User deleted", deletedUser });
+    const deletedUser = await User.findByIdAndDelete(id);
+
+    // 🔍 If user not found
+    if (!deletedUser) {
+      return res.status(404).send({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // ✅ Success
+    res.status(200).send({
+      success: true,
+      message: "User deleted successfully",
+      user: deletedUser,
+    });
+
   } catch (err) {
-    res.status(500).send(err.message);
+    // ⚠ Server error
+    res.status(500).send({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
