@@ -3,21 +3,74 @@ const User = require("../models/user");
 // Add User
 exports.addUser = async (req, res) => {
   try {
+    const { email, age } = req.body;
+    if (!age || age <= 18) {
+      return res.status(400).send({
+        success: false,
+        message: "Age should be 18+",
+      });
+    }
+    const alreadyUser = await User.findOne({ email });
+    if (alreadyUser) {
+      return res.status(400).send({
+        success: false,
+        message: "Email already exists",
+      });
+    }
+
     const user = new User(req.body);
     await user.save();
-    res.send({ message: "User added successfully", user });
+
+    res.status(201).send({
+      success: true,
+      message: "User added successfully",
+      data: user,
+    });
   } catch (err) {
-    res.status(500).send(err.message);
+    res.status(500).send({
+      success: false,
+      message: "Server error",
+      error: err.message,
+    });
   }
 };
 
 // Get All Users
 exports.getUsers = async (req, res) => {
   try {
-    const users = await User.find();
-    res.send(users);
+    let { age, search, page = 1, limit = 10 } = req.query;
+
+    // 🔍 Filter
+    const filter = {};
+    if (age) {
+      filter.age = Number(age);
+    }
+    if (search) {
+      filter.name = { $regex: search, $options: "i" };
+    }
+    // 🔢 Pagination values
+    page = Number(page);
+    limit = Number(limit);
+    const skip = (page - 1) * limit;
+
+    // 📦 Data
+    const users = await User.find(filter).skip(skip).limit(limit);
+
+    const totalDocs = await User.countDocuments(filter);
+
+    res.status(200).send({
+      success: true,
+      message: "Users Fetch Successfully",
+      totalDocs,
+      currentPage: page,
+      totalPages: Math.ceil(totalDocs / limit),
+      users,
+    });
   } catch (err) {
-    res.status(500).send(err.message);
+    res.status(500).send({
+      success: false,
+      message: err.message,
+    });
   }
 };
 
@@ -26,7 +79,7 @@ exports.getUserById = async (req, res) => {
   try {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).send("User not found");
-    res.send(user);
+    res.status(200).send(user);
   } catch (err) {
     res.status(500).send(err.message);
   }
@@ -35,8 +88,8 @@ exports.getUserById = async (req, res) => {
 // Update User
 exports.updateUser = async (req, res) => {
   try {
-    const id = req.params.id
-    const body = req.body
+    const id = req.params.id;
+    const body = req.body;
 
     if (!id || id.length !== 24) {
       return res.status(400).send({
@@ -45,11 +98,7 @@ exports.updateUser = async (req, res) => {
       });
     }
 
-    const updatedUser = await User.findByIdAndUpdate(
-      id,
-      body,
-      { new: true }
-    );
+    const updatedUser = await User.findByIdAndUpdate(id, body, { new: true });
 
     if (!updatedUser) {
       return res.status(404).send({
@@ -103,7 +152,6 @@ exports.deleteUser = async (req, res) => {
       message: "User deleted successfully",
       user: deletedUser,
     });
-
   } catch (err) {
     // ⚠ Server error
     res.status(500).send({
