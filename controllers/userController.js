@@ -1,23 +1,8 @@
 const User = require("../models/user");
 
 // Add User
-exports.addUser = async (req, res) => {
+exports.addUser = async (req, res, next) => {
   try {
-    const { email, age } = req.body;
-    if (!age || age <= 18) {
-      return res.status(400).send({
-        success: false,
-        message: "Age should be 18+",
-      });
-    }
-    const alreadyUser = await User.findOne({ email });
-    if (alreadyUser) {
-      return res.status(400).send({
-        success: false,
-        message: "Email already exists",
-      });
-    }
-
     const user = new User(req.body);
     await user.save();
 
@@ -27,16 +12,12 @@ exports.addUser = async (req, res) => {
       data: user,
     });
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: "Server error",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
 // Get All Users
-exports.getUsers = async (req, res) => {
+exports.getUsers = async (req, res, next) => {
   try {
     let { age, search, page = 1, limit = 10 } = req.query;
 
@@ -67,26 +48,23 @@ exports.getUsers = async (req, res) => {
       users,
     });
   } catch (err) {
-    res.status(500).send({
-      success: false,
-      message: err.message,
-    });
+    next(err);
   }
 };
 
 // Get Single User
-exports.getUserById = async (req, res) => {
+exports.getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
-    if (!user) return res.status(404).send("User not found");
+    if (!user) return res.status(400).send("User not found");
     res.status(200).send(user);
   } catch (err) {
-    res.status(500).send(err.message);
+    next(err);
   }
 };
 
 // Update User
-exports.updateUser = async (req, res) => {
+exports.updateUser = async (req, res,next) => {
   try {
     const id = req.params.id;
     const body = req.body;
@@ -113,18 +91,13 @@ exports.updateUser = async (req, res) => {
       user: updatedUser,
     });
   } catch (err) {
-    // ⚠ Server error
-    res.status(500).send({
-      success: false,
-      message: "Server error",
-      error: err.message,
-    });
+    next(err);
   }
 };
 
 // DELETE User
 
-exports.deleteUser = async (req, res) => {
+exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
 
@@ -153,11 +126,6 @@ exports.deleteUser = async (req, res) => {
       user: deletedUser,
     });
   } catch (err) {
-    // ⚠ Server error
-    res.status(500).send({
-      success: false,
-      message: "Server error",
-      error: err.message,
-    });
+    next(err);
   }
 };
