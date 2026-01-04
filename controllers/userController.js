@@ -64,18 +64,10 @@ exports.getUserById = async (req, res, next) => {
 };
 
 // Update User
-exports.updateUser = async (req, res,next) => {
+exports.updateUser = async (req, res, next) => {
   try {
     const id = req.params.id;
     const body = req.body;
-
-    if (!id || id.length !== 24) {
-      return res.status(400).send({
-        success: false,
-        message: "Invalid user ID",
-      });
-    }
-
     const updatedUser = await User.findByIdAndUpdate(id, body, { new: true });
 
     if (!updatedUser) {
@@ -100,14 +92,6 @@ exports.updateUser = async (req, res,next) => {
 exports.deleteUser = async (req, res, next) => {
   try {
     const { id } = req.params;
-
-    // 🔒 Validate MongoDB ID
-    if (!id || id.length !== 24) {
-      return res.status(400).send({
-        success: false,
-        message: "Invalid user ID",
-      });
-    }
 
     const deletedUser = await User.findByIdAndDelete(id);
 
