@@ -5,6 +5,7 @@ const validateUser = require("../middlewares/validateUser");
 const validateObjectId = require("../middlewares/validateObjectId");
 // Routes
 router.post("/add", validateUser, userController.addUser);
+router.post("/signup", userController.signup);
 router.get("/", userController.getUsers);
 router.get("/:id", validateObjectId, userController.getUserById);
 router.put("/update/:id", validateObjectId, userController.updateUser);

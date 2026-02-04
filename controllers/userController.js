@@ -1,6 +1,55 @@
 const User = require("../models/user");
+const bcrypt = require('bcrypt')
+
+// signup
+
+exports.signup = async (req, res, next) => {
+  try {
+    const { name, email, password, age } = req.body
+    if (!name || !email || !password || !age) {
+      return res.status(400).send({
+        success: false,
+        message: "Name, email, age and password are required",
+      })
+    }
+
+    const existingUser = await User.findOne({ email })
+
+    if (existingUser) {
+      return res.status(400).send({
+        success: false,
+        message: "email already exist",
+      })
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    const user = new User({
+      name,
+      email,
+      age,
+      password: hashedPassword
+    })
+    await user.save()
+
+    res.status(201).send({
+      success: true,
+      message: "User registered successfully",
+      data: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        age: user.age,
+      },
+    });
+  }
+  catch (err) {
+    next(err);
+  }
+}
 
 // Add User
+
 exports.addUser = async (req, res, next) => {
   try {
     const user = new User(req.body);
