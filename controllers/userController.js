@@ -1,54 +1,96 @@
 const User = require("../models/user");
-const bcrypt = require('bcrypt')
-
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const Counter = require("../models/counter");
 // signup
 
 exports.signup = async (req, res, next) => {
   try {
-    const { name, email, password, age } = req.body
+    const { name, email, password, age } = req.body;
     if (!name || !email || !password || !age) {
       return res.status(400).send({
         success: false,
         message: "Name, email, age and password are required",
-      })
+      });
     }
 
-    const existingUser = await User.findOne({ email })
+    const existingUser = await User.findOne({ email });
 
     if (existingUser) {
       return res.status(400).send({
         success: false,
         message: "email already exist",
-      })
+      });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10)
-
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const counter = await Counter.findOneAndUpdate(
+      { name: "userId" },
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true },
+    );
     const user = new User({
-      name,
-      email,
-      age,
-      password: hashedPassword
-    })
-    await user.save()
+      ...req.body,
+      userId: counter.seq,
+    });
+
+    await user.save();
 
     res.status(201).send({
       success: true,
       message: "User registered successfully",
       data: {
+        userId: user.userId,
         id: user._id,
         name: user.name,
         email: user.email,
         age: user.age,
       },
     });
-  }
-  catch (err) {
+  } catch (err) {
     next(err);
   }
-}
+};
 
 // Add User
+
+exports.loginUser = async (req, res, next) => {
+  try {
+    const { email, password } = req.body;
+
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid password",
+      });
+    }
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: "1d",
+    });
+    res.status(200).json({
+      success: true,
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 exports.addUser = async (req, res, next) => {
   try {
