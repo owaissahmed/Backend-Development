@@ -2,6 +2,7 @@ const User = require("../models/user");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const Counter = require("../models/counter");
+const sendEmail = require("../config/email");
 // signup
 
 exports.signup = async (req, res, next) => {
@@ -36,6 +37,11 @@ exports.signup = async (req, res, next) => {
 
     await user.save();
 
+    await sendEmail(
+      user.email,
+      "Welcome to our App",
+      `Hello ${user.name}, your account has been created successfully`
+    );
     res.status(201).send({
       success: true,
       message: "User registered successfully",
@@ -94,7 +100,12 @@ exports.loginUser = async (req, res, next) => {
 
 exports.addUser = async (req, res, next) => {
   try {
-    const user = new User(req.body);
+
+    const user = new User({
+      ...req.body,
+      profileImage: req.file ? req.file.filename : null
+    });
+
     await user.save();
 
     res.status(201).send({
