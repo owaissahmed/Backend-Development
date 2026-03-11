@@ -6,7 +6,34 @@ const validateUser = require("../middlewares/validateUser");
 const validateObjectId = require("../middlewares/validateObjectId");
 const upload = require("../middlewares/uploads");
 // Routes
+/**
+ * @swagger
+ * /api/users/add-user:
+ *   post:
+ *     consumes:
+ *       - multipart/form-data
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         multipart/form-data:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               profileImage:
+ *                 type: string
+ *                 format: binary
+ *               name:
+ *                 type: string
+ *               email:
+ *                 type: string
+ *               password:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: User added successfully
+ */
 router.post("/add-user", upload.single("profileImage"), validateUser, userController.addUser);
+
 router.post("/signup", userController.signup);
 router.post("/login", userController.loginUser);
 router.get("/", authMiddleware, userController.getUsers);

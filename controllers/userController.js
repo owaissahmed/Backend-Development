@@ -32,16 +32,17 @@ exports.signup = async (req, res, next) => {
     );
     const user = new User({
       ...req.body,
+      password: hashedPassword,
       userId: counter.seq,
     });
 
     await user.save();
 
-    await sendEmail(
-      user.email,
-      "Welcome to our App",
-      `Hello ${user.name}, your account has been created successfully`
-    );
+    // await sendEmail(
+    //   user.email,
+    //   "Welcome to our App",
+    //   `Hello ${user.name}, your account has been created successfully`
+    // );
     res.status(201).send({
       success: true,
       message: "User registered successfully",
