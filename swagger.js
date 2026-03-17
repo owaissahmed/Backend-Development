@@ -3,21 +3,36 @@ const swaggerUi = require("swagger-ui-express");
 
 const swaggerOptions = {
   swaggerDefinition: {
-    openapi: "3.0.0", // OpenAPI version
+    openapi: "3.0.0",
     info: {
-      title: "My Node API",
+      title: "Apis",
       version: "1.0.0",
-      description: "Node.js APIs documentation",
+      description: "http://localhost:5000/api-docs/",
     },
     servers: [
       {
-        url: "http://localhost:5000", // backend server URL
+        url: "http://localhost:5000",
+      },
+    ],
+
+    components: {
+      securitySchemes: {
+        bearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT",
+        },
+      },
+    },
+
+    security: [
+      {
+        bearerAuth: [],
       },
     ],
   },
-  apis: ["./routes/*.js"], // Jahan tumhare route files hain
+  apis: ["./routes/*.js"],
 };
-
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
 
 module.exports = (app) => {
